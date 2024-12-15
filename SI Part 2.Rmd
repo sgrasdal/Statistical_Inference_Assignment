@@ -1,0 +1,116 @@
+---
+title: "Statistical Inference Part 2"
+author: "Simon Grasdal"
+date: "2024-12-11"
+output:
+  pdf_document: default
+  html_document: default
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Overview
+The project aim is to analyze the ToothGrowth data in the R datasets package.
+
+Load the necessary packages
+```{r}
+library(ggplot2)
+library(tinytex)
+library(datasets)
+```
+
+### 1. Load the ToothGrowth data and perform some basic exploratory data analyses
+```{r}
+data(ToothGrowth)
+str(ToothGrowth)
+head(ToothGrowth, 4)
+tail(ToothGrowth, 4)
+```
+Summary of the data
+```{r}
+summary(ToothGrowth)
+```
+### 2.Basic summary of the data
+```{r}
+# Calculatiing the mean of len based on the supplement methods
+Supplement_mean = split(ToothGrowth$len, ToothGrowth$supp)
+sapply(Supplement_mean, mean)
+```
+### 3. Using confidence intervals to compare growth of tooth by supplement dose
+
+```{r}
+qplot(supp,len,data=ToothGrowth,
+      facets=~dose, main="Tooth growth of guinea pigs by supplement type and dosage (mg)",
+      xlab="Supplement type", 
+      ylab="Tooth length") + 
+    geom_boxplot(aes(fill = supp))
+```
+There appears to be a positive affect based on dosage as the dosage increases, the tooth grown also increases. Aside from the 2.0mg dosage, the OJ supplement generally records more tooth grown than VC. 
+
+### 4. Hypothesis Testing for Supplement 
+#### Assumptions:
+The variables must be independent and identically distributes (iid). - Variances of tooth growth are different when using different supplement and dosage. - Tooth growth follows a normal distribution.
+
+<u>Null Hypothesis:</u> There is no difference in tooth growth when using supplement OJ or VC.
+<u>Alternate Hypothesis:</u> There will be more supplement growth for OJ than VC.
+
+#### Test
+```{r}
+OJ <- ToothGrowth$len[ToothGrowth$supp == 'OJ']
+VC <- ToothGrowth$len[ToothGrowth$supp == 'VC']
+```
+
+```{r}
+t.test(
+    OJ,VC,
+    alternative = "greater",
+    paired = FALSE,
+    var.equal = FALSE,
+    conf.level = 0.95
+)
+```
+Based on this One-tailed t-test we can see that the null is rejected (df = 55, p =.03). It can be concluded that the supplement OJ has a greater effect on tooth growth than supplement VC.
+
+#### Hypothesis Test by Dosage
+```{r}
+dose_half <- ToothGrowth$len[
+    ToothGrowth$dose == 0.5
+]
+dose_one <- ToothGrowth$len[
+    ToothGrowth$dose == 1
+]
+dose_two <- ToothGrowth$len[
+    ToothGrowth$dose == 2
+]
+# One-tailed independant t-test with unequal variance
+t.test(dose_half,
+       dose_one,
+       alternative = "less",
+       paired = FALSE,
+       var.equal = FALSE,
+       conf.level = 0.95)
+t.test(
+    dose_half,dose_two,
+    alternative = "less",
+    paired = FALSE,
+    var.equal = FALSE,
+    conf.level = 0.95
+)
+t.test(
+    dose_one,dose_two,
+    alternative = "less",
+    paired = FALSE,
+    var.equal = FALSE,
+    conf.level = 0.95
+)
+```
+## Conclusion
+
+When the dose is .5mg or .1mg there is a difference between the teeth growth supplements after taking OJ or VC. The assumption needed is we first assumed the whole population is normally distributed, then we assumed the population is normally distributed under each dose.
+
+
